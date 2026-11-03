@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Gidelim bağlantı testi</title>
+<style>
+  body { margin: 0; padding: 24px 18px; background: #e6f4ff; color: #111; font: 17px/1.45 system-ui, sans-serif; }
+  li { margin: 8px 0; word-break: break-word; }
+  .ok { color: #11701f; } .no { color: #b3261e; } .wait { color: #666; }
+</style>
+</head>
+<body>
+<h1 style="font-size:22px;margin:0 0 8px">Gidelim bağlantı testi</h1>
+<p>Bu mavi sayfayı görüyorsan GitHub açılıyor. Sonuçlar 10 saniye içinde dolar, sonra ekran görüntüsü al.</p>
+<ul id="list"><li class="no">JavaScript çalışmadı</li></ul>
+<script>
+  (function () {
+    var list = document.getElementById('list');
+    list.innerHTML = '';
+    function row(text) {
+      var li = document.createElement('li');
+      li.className = 'wait';
+      li.textContent = '… ' + text;
+      list.appendChild(li);
+      return function (ok, extra) {
+        li.className = ok ? 'ok' : 'no';
+        li.textContent = (ok ? '✓ ' : '✗ ') + text + (extra ? ' (' + extra + ')' : '');
+      };
+    }
+    function viaImage(url, label) {
+      var done = row(label);
+      var img = new Image();
+      var t = setTimeout(function () { img.src = ''; done(false, 'zaman aşımı'); }, 9000);
+      img.onload = function () { clearTimeout(t); done(true); };
+      img.onerror = function () { clearTimeout(t); done(false, 'engellendi ya da ulaşılamadı'); };
+      img.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now();
+    }
+    function viaFetch(url, label) {
+      var done = row(label);
+      if (!window.fetch) return done(false, 'fetch yok');
+      var t = setTimeout(function () { done(false, 'zaman aşımı'); }, 9000);
+      fetch(url, { mode: 'no-cors', cache: 'no-store' }).then(
+        function () { clearTimeout(t); done(true); },
+        function (e) { clearTimeout(t); done(false, (e && e.message) || 'engellendi'); }
+      );
+    }
+    row('Tarayıcı: ' + navigator.userAgent)(true);
+    viaImage('https://www.google.com/favicon.ico', 'Kontrol: Google');
+    viaImage('https://gidelim-ten.vercel.app/pwa-192.png', 'Gidelim sitesi (vercel.app)');
+    viaFetch('https://gidelim-ten.vercel.app/tani.html', 'Gidelim sayfası (vercel.app)');
+    viaImage('https://vercel.com/favicon.ico', 'Vercel ana sitesi');
+    viaFetch('https://lpwjeouqxqettziratfd.supabase.co/auth/v1/health', 'Veritabanı (supabase.co)');
+  })();
+</script>
+</body>
+</html>
